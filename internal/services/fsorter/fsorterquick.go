@@ -111,7 +111,7 @@ func (r *fsorterquick) sort(f *os.File, field string, left int64, right int64) e
 		return err
 	}
 
-	err = r.sort(f, field, start, left)
+	err = r.sort(f, field, start, left-int64(r.rdsize))
 	if err != nil {
 		return err
 	}
