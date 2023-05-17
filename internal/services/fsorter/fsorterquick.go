@@ -1,7 +1,6 @@
 package fsorter
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
@@ -21,16 +20,6 @@ func NewFSorterQuick(rd models.RecordDescriptor) (FSorter, error) {
 }
 
 func (r *fsorterquick) Sort(fname string, field string) error {
-	found := false
-	for _, fd := range r.rd {
-		if fd.Name == field {
-			found = true
-		}
-	}
-	if !found {
-		return errors.New("invalid field name")
-	}
-
 	f, err := os.OpenFile(fname, os.O_RDWR, os.ModeExclusive)
 	if err != nil {
 		return fmt.Errorf("failed to open file: %w", err)

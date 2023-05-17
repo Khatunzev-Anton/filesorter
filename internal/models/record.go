@@ -55,7 +55,6 @@ func (r *Record) Size() int {
 }
 
 func (r *Record) LessThan(other ComparableByField, field string) (bool, error) {
-	result := false
 	for _, f := range *r {
 		if f.Descriptor.Name != field {
 			continue
@@ -77,7 +76,7 @@ func (r *Record) LessThan(other ComparableByField, field string) (bool, error) {
 			return false, UnsupportedType
 		}
 	}
-	return result, nil
+	return false, fmt.Errorf("unknown field %[1]s", field)
 }
 
 func (r *Record) String() (string, error) {
