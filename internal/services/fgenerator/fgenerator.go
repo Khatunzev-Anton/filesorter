@@ -1,4 +1,4 @@
-package filegenerator
+package fgenerator
 
 import (
 	"errors"
@@ -13,19 +13,19 @@ type RecordGenerator interface {
 	GenerateRecord() (models.SerializableRecord, error)
 }
 
-type FileGenerator interface {
+type FGenerator interface {
 	GenerateFile(fname string, cnt int) error
 }
 
-type filegenerator struct {
+type fgenerator struct {
 	g RecordGenerator
 }
 
-func NewFileGenerator(g RecordGenerator) (FileGenerator, error) {
-	return &filegenerator{g: g}, nil
+func NewFGenerator(g RecordGenerator) (FGenerator, error) {
+	return &fgenerator{g: g}, nil
 }
 
-func (r *filegenerator) GenerateFile(fname string, cnt int) error {
+func (r *fgenerator) GenerateFile(fname string, cnt int) error {
 	if _, err := os.Stat(fname); !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("output file already exists")
 	}
@@ -52,7 +52,7 @@ func (r *filegenerator) GenerateFile(fname string, cnt int) error {
 	return nil
 }
 
-func (r *filegenerator) generaterecords(halt <-chan struct{}, errs chan error, cnt int) <-chan models.SerializableRecord {
+func (r *fgenerator) generaterecords(halt <-chan struct{}, errs chan error, cnt int) <-chan models.SerializableRecord {
 	result := make(chan models.SerializableRecord, 5)
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
@@ -86,7 +86,7 @@ func (r *filegenerator) generaterecords(halt <-chan struct{}, errs chan error, c
 	return result
 }
 
-func (r *filegenerator) saverecords(file *os.File, generatedrecords <-chan models.SerializableRecord, halt <-chan struct{}, errs chan error) <-chan struct{} {
+func (r *fgenerator) saverecords(file *os.File, generatedrecords <-chan models.SerializableRecord, halt <-chan struct{}, errs chan error) <-chan struct{} {
 	result := make(chan struct{})
 
 	wg := &sync.WaitGroup{}

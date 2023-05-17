@@ -7,7 +7,7 @@ import (
 
 	"github.com/Khatunzev-Anton/filesorter/internal/mainconfig"
 	"github.com/Khatunzev-Anton/filesorter/internal/repositories"
-	"github.com/Khatunzev-Anton/filesorter/internal/services/filegenerator"
+	"github.com/Khatunzev-Anton/filesorter/internal/services/fgenerator"
 	"github.com/Khatunzev-Anton/filesorter/internal/services/recordgenerator"
 	"github.com/spf13/cobra"
 )
@@ -49,12 +49,12 @@ var generateCmd = &cobra.Command{
 			return fmt.Errorf("failed to initialize generator: %w", err)
 		}
 
-		fgenerator, err := filegenerator.NewFileGenerator(g)
+		fgen, err := fgenerator.NewFGenerator(g)
 		if err != nil {
 			return fmt.Errorf("failed to initialize file generator: %w", err)
 		}
 
-		err = fgenerator.GenerateFile(generateoutput, int(generatecount))
+		err = fgen.GenerateFile(generateoutput, int(generatecount))
 		if err != nil {
 			return fmt.Errorf("failed to generate file: %w", err)
 		}
