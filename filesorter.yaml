@@ -1,0 +1,7 @@
+record:
+  - name: name
+    size: 64
+    type: string
+  - name: salary
+    size: 4
+    type: uint32
