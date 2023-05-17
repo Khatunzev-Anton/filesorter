@@ -3,6 +3,8 @@ package models
 import (
 	"reflect"
 	"testing"
+
+	"gotest.tools/v3/assert"
 )
 
 func TestRecord_Value(t *testing.T) {
@@ -273,6 +275,58 @@ func TestRecord_LessThan(t *testing.T) {
 			if got != tt.want {
 				t.Errorf("Record.LessThan() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestFromBytes(t *testing.T) {
+	rdesc := RecordDescriptor{
+		FieldDescriptor{Name: "name", Size: 64, Type: "string"},
+		FieldDescriptor{Name: "salary", Size: 4, Type: "uint32"},
+	}
+
+	rec := &Record{
+		Field{
+			Descriptor: FieldDescriptor{Name: "name", Size: 64, Type: "string"},
+			Value:      "John Smith",
+		},
+		Field{
+			Descriptor: FieldDescriptor{Name: "salary", Size: 4, Type: "uint32"},
+			Value:      uint32(178464),
+		},
+	}
+
+	type args struct {
+		b  []byte
+		rd RecordDescriptor
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    SerializableRecord
+		wantErr bool
+	}{
+		{
+			name: "JS from bytes",
+			args: args{
+				b:  []byte{74, 111, 104, 110, 32, 83, 109, 105, 116, 104, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 185, 2, 0},
+				rd: rdesc,
+			},
+			want:    rec,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := FromBytes(tt.args.b, tt.args.rd)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("FromBytes() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			s1, _ := got.String()
+			s2, _ := tt.want.String()
+			assert.Equal(t, s1, s2)
 		})
 	}
 }
