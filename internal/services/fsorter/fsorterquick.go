@@ -68,7 +68,7 @@ QuickSort:
 */
 
 func (r *fsorterquick) sort(f *os.File, field string, left int64, right int64) error {
-	if right-left < int64(2*r.rdsize) {
+	if right-left < int64(r.rdsize) {
 		return nil
 	}
 	center := (left + right + int64(r.rdsize)) / 2
