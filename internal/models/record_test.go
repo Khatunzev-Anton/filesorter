@@ -318,7 +318,7 @@ func TestFromBytes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := FromBytes(tt.args.b, tt.args.rd)
+			got, err := SerializableRecordFromBytes(tt.args.b, tt.args.rd)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FromBytes() error = %v, wantErr %v", err, tt.wantErr)
 				return

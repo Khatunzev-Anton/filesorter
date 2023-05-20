@@ -6,6 +6,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/Khatunzev-Anton/filesorter/internal/app"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -17,12 +18,14 @@ var rootCmd = &cobra.Command{
 	Long:  `/****FILESORTER*****/`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	RunE: func(cmd *cobra.Command, args []string) error {
-
-		return nil
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		var err error
+		application, err = app.NewApp(cfgFile)
+		return err
 	},
 }
 var cfgFile string
+var application app.App
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.

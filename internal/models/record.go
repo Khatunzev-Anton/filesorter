@@ -21,7 +21,7 @@ type ComparableByField interface {
 
 type Record []Field
 
-func FromBytes(b []byte, rd RecordDescriptor) (SerializableRecord, error) {
+func recordFromBytes(b []byte, rd RecordDescriptor) (*Record, error) {
 	result := &Record{}
 	buf := bytes.NewBuffer(b)
 	for _, fd := range rd {
@@ -44,6 +44,14 @@ func FromBytes(b []byte, rd RecordDescriptor) (SerializableRecord, error) {
 		*result = append(*result, f)
 	}
 	return result, nil
+}
+
+func SerializableRecordFromBytes(b []byte, rd RecordDescriptor) (SerializableRecord, error) {
+	return recordFromBytes(b, rd)
+}
+
+func ComparableByFieldFromBytes(b []byte, rd RecordDescriptor) (ComparableByField, error) {
+	return recordFromBytes(b, rd)
 }
 
 func (r *Record) Size() int {

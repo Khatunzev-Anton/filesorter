@@ -2,9 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/Khatunzev-Anton/filesorter/internal/mainconfig"
-	"github.com/Khatunzev-Anton/filesorter/internal/services/fsorter"
 	"github.com/spf13/cobra"
 )
 
@@ -25,21 +24,18 @@ var sortCmd = &cobra.Command{
 	Short: "Sort binary file",
 	Long:  `This command sorts binary file`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("config", cfgFile)
-		var err error
-		config, err := mainconfig.NewMainConfig(cfgFile)
+		f, err := os.OpenFile(sortfilename, os.O_RDWR, os.ModeExclusive)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to open file: %w", err)
 		}
-
-		rd := config.GetRecordDescriptor()
-
-		sorter, err := fsorter.NewFSorterQuick(rd)
+		defer f.Close()
+		fi, err := f.Stat()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get file statistics: %w", err)
 		}
+		left, size := 0, fi.Size()
 
-		err = sorter.Sort(sortfilename, sortby)
+		err = application.Sort(f, sortby, int64(left), size)
 
 		return err
 	},

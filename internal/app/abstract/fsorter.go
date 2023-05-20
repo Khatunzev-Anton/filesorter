@@ -1,4 +1,4 @@
-package fsorter
+package abstract
 
 import "io"
 

@@ -2,41 +2,37 @@ package fsorter
 
 import (
 	"fmt"
-	"os"
+	"io"
 
 	"github.com/Khatunzev-Anton/filesorter/internal/models"
 )
 
-type fsorterquick struct {
-	rd     models.RecordDescriptor
-	rdsize int
+type FReader interface {
+	ReadComparableByField(f io.ReadSeeker, offset int64) (models.ComparableByField, error)
 }
 
-func NewFSorterQuick(rd models.RecordDescriptor) (FSorter, error) {
+type fsorterquick struct {
+	rd      models.RecordDescriptor
+	freader FReader
+	rdsize  int
+}
+
+func NewFSorterQuick(rd models.RecordDescriptor, freader FReader) (FSorter, error) {
 	return &fsorterquick{
-		rd:     rd,
-		rdsize: rd.Size(),
+		rd:      rd,
+		rdsize:  rd.Size(),
+		freader: freader,
 	}, nil
 }
 
-func (r *fsorterquick) Sort(fname string, field string) error {
-	f, err := os.OpenFile(fname, os.O_RDWR, os.ModeExclusive)
-	if err != nil {
-		return fmt.Errorf("failed to open file: %w", err)
-	}
-	defer f.Close()
-	fi, err := f.Stat()
-	if err != nil {
-		return fmt.Errorf("failed to get file statistics: %w", err)
-	}
-	left, size := 0, fi.Size()
-	if size%int64(r.rdsize) != 0 {
+func (r *fsorterquick) Sort(f io.ReadWriteSeeker, field string, from int64, to int64) error {
+	if (to-from)%int64(r.rdsize) != 0 {
 		return fmt.Errorf("invalid file size")
 	}
-	if size < int64(2*r.rdsize) {
+	if (to - from) < int64(2*r.rdsize) {
 		return nil
 	}
-	err = r.sort(f, field, int64(left), size-int64(r.rdsize))
+	err := r.sort(f, field, from, to-int64(r.rdsize))
 	if err != nil {
 		return err
 	}
@@ -67,7 +63,7 @@ QuickSort:
 	}
 */
 
-func (r *fsorterquick) sort(f *os.File, field string, left int64, right int64) error {
+func (r *fsorterquick) sort(f io.ReadWriteSeeker, field string, left int64, right int64) error {
 	if right-left < int64(r.rdsize) {
 		return nil
 	}
@@ -81,7 +77,7 @@ func (r *fsorterquick) sort(f *os.File, field string, left int64, right int64) e
 		return err
 	}
 
-	rightrecord, err := r.readrecordat(f, right)
+	rightrecord, err := r.freader.ReadComparableByField(f, right)
 	if err != nil {
 		return err
 	}
@@ -89,11 +85,11 @@ func (r *fsorterquick) sort(f *os.File, field string, left int64, right int64) e
 	start := left
 	for i = 0; i < recordscnt; i++ {
 		currentoffset := i*int64(r.rdsize) + start
-		currentrecord, err := r.readrecordat(f, currentoffset)
+		currentrecord, err := r.freader.ReadComparableByField(f, currentoffset)
 		if err != nil {
 			return err
 		}
-		less, err := currentrecord.(models.ComparableByField).LessThan(rightrecord.(models.ComparableByField), field)
+		less, err := currentrecord.LessThan(rightrecord, field)
 		if err != nil {
 			return err
 		}
@@ -123,34 +119,42 @@ func (r *fsorterquick) sort(f *os.File, field string, left int64, right int64) e
 	return nil
 }
 
-func (r *fsorterquick) readrecordat(f *os.File, offset int64) (models.SerializableRecord, error) {
-	buf := make([]byte, r.rdsize)
-	_, err := f.ReadAt(buf, offset)
-	if err != nil {
-		return nil, err
-	}
-	return models.FromBytes(buf, r.rd)
-}
+func (r *fsorterquick) swaprecordbuffersat(f io.ReadWriteSeeker, left int64, right int64) error {
 
-func (r *fsorterquick) swaprecordbuffersat(f *os.File, left int64, right int64) error {
+	_, err := f.Seek(left, 0)
+	if err != nil {
+		return err
+	}
 	leftbuf := make([]byte, r.rdsize)
-	_, err := f.ReadAt(leftbuf, left)
+	_, err = f.Read(leftbuf)
 	if err != nil {
 		return err
 	}
 
+	_, err = f.Seek(right, 0)
+	if err != nil {
+		return err
+	}
 	rightbuf := make([]byte, r.rdsize)
-	_, err = f.ReadAt(rightbuf, right)
+	_, err = f.Read(rightbuf)
 	if err != nil {
 		return err
 	}
 
-	_, err = f.WriteAt(rightbuf, left)
+	_, err = f.Seek(left, 0)
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(rightbuf)
 	if err != nil {
 		return err
 	}
 
-	_, err = f.WriteAt(leftbuf, right)
+	_, err = f.Seek(right, 0)
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(leftbuf)
 	if err != nil {
 		return err
 	}
