@@ -11,6 +11,7 @@ import (
 
 var BufferSizeDoesNotMatch error = errors.New("record size differs from the number of bytes written")
 
+//go:generate mockery --name=NamesRepository
 type NamesRepository interface {
 	Names(page int, pagesize int) ([]string, error)
 }
@@ -26,11 +27,12 @@ type namesalarygenerator struct {
 
 func NewNameSalaryGenerator(rd models.RecordDescriptor, namesrepository NamesRepository, minsalary uint32, maxsalary uint32) (RecordGenerator, error) {
 	result := &namesalarygenerator{
-		rd:        rd,
-		rdsize:    rd.Size(),
-		rsource:   rand.NewSource(time.Now().UnixNano()),
-		minsalary: minsalary,
-		maxsalary: maxsalary,
+		rd:          rd,
+		namesbuffer: []string{},
+		rdsize:      rd.Size(),
+		rsource:     rand.NewSource(time.Now().UnixNano()),
+		minsalary:   minsalary,
+		maxsalary:   maxsalary,
 	}
 
 	var err error
