@@ -21,7 +21,7 @@ func init() {
 var generateCmd = &cobra.Command{
 	Use:   "generate",
 	Short: "Generate test file",
-	Long:  `This command generates binary name-value file`,
+	Long:  `This command generates binary name-value file+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := application.GenerateFile(generateoutput, int(generatecount))
 		if err != nil {
